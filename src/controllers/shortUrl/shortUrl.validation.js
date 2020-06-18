@@ -1,7 +1,10 @@
 import Joi from 'joi';
-import { validation, shortId, dateManager } from '../../utils';
+import {
+  validation, shortId, dateManager, errorRedirect, logger,
+} from '../../utils';
 
 const { redirectUrl, expirationDateMs } = validation;
+const { logError } = logger;
 
 class ShortUrlValidation {
   constructor() {
@@ -15,22 +18,44 @@ class ShortUrlValidation {
       });
   }
 
-  getErrorsCreateParams = params => {
-    const paramsValidationErrors = validation.validateParams(params, this.createSchema);
+  verifyCreateUrlParams = (req, res, next) => {
+    const { body } = req;
+    const endpoint = '/link/create';
+    const method = 'create-validation';
 
-    if (paramsValidationErrors) return paramsValidationErrors;
+    const paramsValidationErrors = validation.validateParams(body, this.createSchema);
 
-    return null;
+    if (paramsValidationErrors) {
+      logError(endpoint, method, body, paramsValidationErrors);
+
+      res.status(400).json({ message: paramsValidationErrors, status: 400 });
+      return;
+    }
+
+    next();
   }
 
-  isRedirectParamsValid(id) {
-    return shortId.isIdValid(id);
+  verifyRedirectUrlParams = (req, res, next) => {
+    const { id } = req.params;
+    const endpoint = '/link/:id';
+    const method = 'redirect-validation';
+
+    if (!shortId.isIdValid(id)) {
+      logError(endpoint, method, req.params, { err: 'id inválido' });
+
+      errorRedirect.deliverExpirationUrlPage(res);
+      return;
+    }
+
+    next();
   }
 
   isRedirectUrlValid = urlParams => {
-    const isValid = !urlParams || urlParams.expirationDateMs < dateManager.getCurrentTimeMs();
+    const isUrlNotValidValid = (
+      !urlParams || urlParams.expirationDateMs < dateManager.getCurrentTimeMs()
+    );
 
-    if (isValid) return false;
+    if (isUrlNotValidValid) return false;
 
     return true;
   }
