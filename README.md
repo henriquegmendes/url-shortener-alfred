@@ -20,6 +20,8 @@ MONGODB_URI=mongodb://localhost/short-url
 SHORT_URL_BASE=localhost:5000/link
 ```
 
+Since this project user MongoDb as database, you need to install Mongo Client in your machine before running it locally. You can access [MongoDB Documentation](https://docs.mongodb.com/manual/administration/install-community/) and follow the installation instructions before running your project.
+
 ## Contributing
 
 Please feel free to fork/clone this repo to look deeper into this project and contribute if you like. :blush
